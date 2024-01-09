@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation template for DynamoDB, Lambda, S3, and CloudFront'
+
+Parameters:
+  WebAppBucketName:
+    Type: String
+    Description: 'Name of the S3 bucket containing the web application files'
+
+Resources:
+  DynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: aws-course-table
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  LambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: lmbda-aws-course
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      FunctionName: lmbda-aws-course
+      Runtime: python3.8
+      Timeout: 10
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref WebAppBucketName
+        S3Key: 'lambda-function.zip'
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:DeleteItem'
+                Resource: !GetAtt DynamoDBTable.Arn
+
+  WebAppBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref bcuket-serveless-web-app
+
+  CloudFrontDistribution:
+    Type: 'AWS::CloudFront::Distribution'
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt https://dhxdnx12fvgz3.cloudfront.net
+            Id: WebAppBucketOrigin
+        DefaultCacheBehavior:
+          TargetOriginId: WebAppBucketOrigin
+          ViewerProtocolPolicy: redirect-to-https
+        Enabled: true
