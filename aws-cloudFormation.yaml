@@ -1,79 +1,140 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'AWS CloudFormation template for DynamoDB, Lambda, S3, and CloudFront'
-
-Parameters:
-  WebAppBucketName:
-    Type: String
-    Description: 'Name of the S3 bucket containing the web application files'
-
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
 Resources:
-  DynamoDBTable:
-    Type: 'AWS::DynamoDB::Table'
-    Properties:
-      TableName: aws-course-table
-      AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: N
-      KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+    S3Bucket:
+        Type: "AWS::S3::Bucket"
+        Properties:
+            BucketName: !Sub "bcuket-${IAMRole}"
+            BucketEncryption: 
+                ServerSideEncryptionConfiguration: 
+                  - 
+                    ServerSideEncryptionByDefault: 
+                        SSEAlgorithm: "AES256"
+                    BucketKeyEnabled: true
+            ReplicationConfiguration: 
+                Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/service-role/aws-lmbda-role-lfbkp6bq"
+                Rules: 
+                  - 
+                    Id: "aws-replcation"
+                    Status: "Enabled"
+                    Destination: 
+                        Bucket: "arn:aws:s3:::awsdestination-ccourse"
+            VersioningConfiguration: 
+                Status: "Enabled"
+            OwnershipControls: 
+                Rules: 
+                  - 
+                    ObjectOwnership: "BucketOwnerEnforced"
+            PublicAccessBlockConfiguration: 
+                BlockPublicAcls: true
+                BlockPublicPolicy: true
+                IgnorePublicAcls: true
+                RestrictPublicBuckets: true
 
-  LambdaFunction:
-    Type: 'AWS::Lambda::Function'
-    Properties:
-      FunctionName: lmbda-aws-course
-      Handler: index.handler
-      Role: !GetAtt LambdaExecutionRole.Arn
-      FunctionName: lmbda-aws-course
-      Runtime: python3.8
-      Timeout: 10
-      MemorySize: 256
-      Code:
-        S3Bucket: !Ref WebAppBucketName
-        S3Key: 'lambda-function.zip'
-      Environment:
-        Variables:
-          DYNAMODB_TABLE: !Ref DynamoDBTable
+    Route53RecordSet:
+        Type: "AWS::Route53::RecordSet"
+        Properties:
+            Name: !Sub "helloworld.${Route53RecordSet2}"
+            Type: "A"
+            AliasTarget: 
+                HostedZoneId: "Z2FDTNDATAQYW2"
+                DNSName: "dhxdnx12fvgz3.cloudfront.net."
+                EvaluateTargetHealth: false
+            HostedZoneId: !Ref Route53HostedZone
 
-  LambdaExecutionRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: LambdaExecutionPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'dynamodb:PutItem'
-                  - 'dynamodb:GetItem'
-                  - 'dynamodb:UpdateItem'
-                  - 'dynamodb:DeleteItem'
-                Resource: !GetAtt DynamoDBTable.Arn
+    S3BucketPolicy:
+        Type: "AWS::S3::BucketPolicy"
+        Properties:
+            Bucket: !Ref S3Bucket
+            PolicyDocument: 
+                Version: "2008-10-17"
+                Id: "PolicyForCloudFrontPrivateContent"
+                Statement: 
+                  - 
+                    Sid: "AllowCloudFrontServicePrincipal"
+                    Effect: "Allow"
+                    Principal: 
+                        Service: "cloudfront.amazonaws.com"
+                    Action: "s3:GetObject"
+                    Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+                    Condition: 
+                        StringEquals: 
+                            "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/EQ4ANF6ZFLS7O"
 
-  WebAppBucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: !Ref bcuket-serveless-web-app
+    Route53HostedZone:
+        Type: "AWS::Route53::HostedZone"
+        Properties:
+            Name: !Ref Route53RecordSet2
 
-  CloudFrontDistribution:
-    Type: 'AWS::CloudFront::Distribution'
-    Properties:
-      DistributionConfig:
-        Origins:
-          - DomainName: !GetAtt https://dhxdnx12fvgz3.cloudfront.net
-            Id: WebAppBucketOrigin
-        DefaultCacheBehavior:
-          TargetOriginId: WebAppBucketOrigin
-          ViewerProtocolPolicy: redirect-to-https
-        Enabled: true
+    Route53RecordSet2:
+        Type: "AWS::Route53::RecordSet"
+        Properties:
+            Name: !Ref Route53RecordSet3
+            Type: "NS"
+            TTL: 172800
+            ResourceRecords: 
+              - "ns-267.awsdns-33.com."
+              - "ns-2014.awsdns-59.co.uk."
+              - "ns-977.awsdns-58.net."
+              - "ns-1323.awsdns-37.org."
+            HostedZoneId: "Z04503221RDEAPWTI5IX4"
+
+    Route53RecordSet3:
+        Type: "AWS::Route53::RecordSet"
+        Properties:
+            Name: "dlbsepcp01aws.online."
+            Type: "SOA"
+            TTL: 900
+            ResourceRecords: 
+              - "ns-267.awsdns-33.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+            HostedZoneId: "Z04503221RDEAPWTI5IX4"
+
+    Route53RecordSet4:
+        Type: "AWS::Route53::RecordSet"
+        Properties:
+            Name: !Sub "_34e4af436ed8332e252e1e0b558080eb.${Route53RecordSet2}"
+            Type: "CNAME"
+            TTL: 300
+            ResourceRecords: 
+              - "_17c3172bd2b8f124238a0aac889c9c31.mhbtsbpdnt.acm-validations.aws."
+            HostedZoneId: !Ref Route53HostedZone
+
+    IAMRole:
+        Type: "AWS::IAM::Role"
+        Properties:
+            Path: "/"
+            RoleName: "serveless-web-app"
+            AssumeRolePolicyDocument: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
+            MaxSessionDuration: 3600
+            ManagedPolicyArns: 
+              - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+            Description: "Allows Lambda functions to call AWS services on your behalf."
+
+    IAMServiceLinkedRole:
+        Type: "AWS::IAM::ServiceLinkedRole"
+        Properties:
+            AWSServiceName: "dynamodb.application-autoscaling.amazonaws.com"
+
+    IAMManagedPolicy:
+        Type: "AWS::IAM::ManagedPolicy"
+        Properties:
+            ManagedPolicyName: "aws-course-duc-accses"
+            Path: "/"
+            PolicyDocument: |
+                {
+                	"Version": "2012-10-17",
+                	"Statement": [
+                		{
+                			"Sid": "VisualEditor0",
+                			"Effect": "Allow",
+                			"Action": [
+                				"dynamodb:PutItem",
+                				"dynamodb:GetItem",
+                				"dynamodb:UpdateItem"
+                			],
+                			"Resource": "arn:aws:dynamodb:eu-central-region:*:table/sessions"
+                		}
+                	]
+                }
